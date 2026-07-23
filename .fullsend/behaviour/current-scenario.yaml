@@ -1,6 +1,9 @@
 ops:
-    - description: Prove execution
+    - description: PR payload present
+      op: assert_json
+      args: .fullsend/dispatch/event-payload.json,pull_request.number
+    - description: Prove PR execution
       op: write_fixture
-      args: output/dispatch-enabled-ok.json, fixtures/dispatch/ok.json
+      args: output/dispatch-pr-ok.json, fixtures/dispatch/ok.json
       content: |
         {"status":"ok","source":"harness-dispatch-behaviour-test"}
