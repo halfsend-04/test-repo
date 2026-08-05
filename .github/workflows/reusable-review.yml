@@ -48,8 +48,6 @@ on:
         required: true
       OTEL_EXPORTER_OTLP_TRACES_HEADERS:
         required: false
-      OTEL_EXPORTER_OTLP_HEADERS:
-        required: false
 
 concurrency:
   group: fullsend-review-agent-${{ inputs.source_repo }}-${{ fromJSON(inputs.event_payload).pull_request.number || fromJSON(inputs.event_payload).issue.number }}
@@ -111,6 +109,20 @@ jobs:
             if [[ -d "${SRC}/${dir}" ]]; then
               mkdir -p "${DEST}${dir}"
               cp -r "${SRC}/${dir}/." "${DEST}${dir}/"
+            fi
+          done
+          CUSTOM_BASE="customized"
+          if [[ "${INSTALL_MODE}" == "per-repo" ]]; then
+            CUSTOM_BASE=".fullsend/customized"
+          fi
+          for dir in ${LAYERED_DIRS}; do
+            if [[ -d "${CUSTOM_BASE}/${dir}" ]]; then
+              find "${CUSTOM_BASE}/${dir}" -type f ! -name '.gitkeep' -print0 \
+                | while IFS= read -r -d '' f; do
+                    rel="${f#"${CUSTOM_BASE}"/}"
+                    mkdir -p "$(dirname "${DEST}${rel}")"
+                    cp "${f}" "${DEST}${rel}"
+                  done
             fi
           done
           mkdir -p .github/scripts
@@ -181,10 +193,7 @@ jobs:
           OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}
           OTEL_EXPORTER_OTLP_TRACES_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_TRACES_HEADERS }}
-          OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
-          OTEL_EXPORTER_OTLP_CERTIFICATE: ${{ vars.OTEL_EXPORTER_OTLP_CERTIFICATE }}
           OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
-          OTEL_SDK_DISABLED: ${{ vars.OTEL_SDK_DISABLED }}
         with:
           agent: review
           fullsend-dir: ${{ inputs.install_mode == 'per-repo' && '.fullsend' || '' }}
