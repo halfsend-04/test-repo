@@ -8,7 +8,7 @@ the round-trip is lossless.
 import os
 import tempfile
 
-from src.file_writer import BUFFER_SIZE, read_file, save_file
+from src.file_writer import BUFFER_SIZE, save_file
 
 
 def _roundtrip(content):
@@ -17,11 +17,11 @@ def _roundtrip(content):
     os.close(fd)
     try:
         save_file(path, content)
-        result = read_file(path)
-        assert result == content, "round-trip content mismatch"
-        # Also verify raw byte length on disk matches the UTF-8 encoding.
         with open(path, "rb") as fh:
             raw = fh.read()
+        result = raw.decode("utf-8")
+        assert result == content, "round-trip content mismatch"
+        # Also verify raw byte length on disk matches the UTF-8 encoding.
         assert raw == content.encode("utf-8"), "raw bytes mismatch"
     finally:
         os.unlink(path)

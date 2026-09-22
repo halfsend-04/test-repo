@@ -9,15 +9,6 @@ count.
 BUFFER_SIZE = 65536
 
 
-def _encode_chunk(text):
-    """Encode a text string to UTF-8 bytes.
-
-    Returns the encoded bytes so callers can use the actual byte length
-    for buffer math instead of the character count.
-    """
-    return text.encode("utf-8")
-
-
 def save_file(path, content):
     """Write *content* to *path* using buffered binary I/O.
 
@@ -28,16 +19,10 @@ def save_file(path, content):
     the segfault reported in v2.3.1 for files larger than 64 KB
     containing emoji or CJK text.
     """
-    encoded = _encode_chunk(content)
+    encoded = content.encode("utf-8")
     with open(path, "wb") as fh:
         offset = 0
         while offset < len(encoded):
             end = min(offset + BUFFER_SIZE, len(encoded))
             fh.write(encoded[offset:end])
             offset = end
-
-
-def read_file(path):
-    """Read the file at *path* and return its text content."""
-    with open(path, "rb") as fh:
-        return fh.read().decode("utf-8")
